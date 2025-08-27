@@ -1,0 +1,360 @@
+\# \*\*PRD v2 — License Audit AI Tool \*\*
+
+
+
+\*\*Product Name:\*\* Lyson – AI-Powered SaaS License Audit
+
+\*\*Version:\*\* 2.0
+
+\*\*Date:\*\* August 2025
+
+
+
+---
+
+
+
+\## 1. Overview
+
+
+
+Lyson is a \*\*AI Agent tool\*\* that detects SaaS license waste for Small and medium enterprises (10-100 employes)
+
+The final product is going to be able to integrate to different Tools to extract accurate data (Google Workspace, Slack, Spendesk, HR Tools — this list is non exhaustive).
+For the MVP, Lyson connects to Google Workspace via OAuth2 to retrieve users, license assignments, and activity metadata (e.g., last login, suspended status).
+This approach allows us to ship fast, reduce technical risk, and validate demand while laying the foundation for broader API integrations.
+
+
+
+---
+
+
+
+\## 2. Goals \& Objectives
+
+
+
+\* \*\*Primary Goal:\*\* Identify unused or misallocated SaaS licenses from uploaded data. **Key element for this to succeed is that the intelligent data mapping is succesful**
+
+\* \*\*Secondary Goals:\*\*
+
+
+
+&nbsp; \* Normalize messy vendor data and employee records.
+
+&nbsp; \* Provide clear, executive-friendly reports with savings estimates.
+
+&nbsp; \* Enable startups to test value in minutes, without integrations.
+
+* Keep data secure and private
+
+
+
+---
+
+
+
+\## 3. Target Users
+
+
+
+\* \*\*Primary:\*\* Founders, Finance/Ops managers, IT managers in \*\*Series A/B startups (30–150 employees)\*\* 
+
+\* \*\*Secondary:\*\* Small procurement/finance teams looking for quick wins before implementing larger SaaS management platforms.
+
+
+
+---
+
+
+
+\## 4. Key Capabilities for MVP
+
+
+
+1\. **Google Workspace Integration (OAuth2).**
+
+&nbsp;  \* Admin consent via OAuth2 (minimal read-only scopes).
+&nbsp;  \* Users directory: email, name, department, status, suspended, lastLoginTime.
+&nbsp;  \* License assignments: SKU/plan, assignedTo.
+&nbsp;  \* Activity signals: last login; used to flag inactivity > 60 days.
+
+
+
+2\. \*\*Data Normalization \& Cleaning\*\*
+
+
+
+&nbsp;  \* Standardize vendor names (AI + fallback dictionary).
+
+* intelligent data analysis. We want the Agent to identify which data is relevant for our audit ( Our key success factors are : price, tier plan of the license, last loging , loging per days / Week, user name, license name, payment recurrence, vendor, employee active / inactive)
+
+&nbsp;  \* Match employees to license records (fuzzy matching).
+
+&nbsp;  \* Detect corrupted or missing data.
+
+
+
+3\. \*\*Waste Detection\*\*
+
+
+
+&nbsp;  \* Identify unused licenses (inactive > 60 days).
+
+* License overlap detection : the user uses one license and the ocmpetitor's one to do the same
+
+&nbsp;  \* Detect licenses assigned to ex-employees.
+
+&nbsp;  \* Flag over-provisioning (more licenses than headcount).
+
+&nbsp;  \* Highlight duplicate allocations.
+
+
+
+4\. \*\*Report Generation\*\*
+
+
+
+&nbsp;  \* Executive summary (potential savings, % optimization).
+
+&nbsp;  \* Detailed findings table.
+
+&nbsp;  \* Recommendations with confidence scores.
+
+&nbsp;  \* Output formats: \*\*PDF + JSON\*\*.
+
+
+
+5\. \*\*Demo Mode\*\*
+
+
+
+&nbsp;  \* Pre-loaded sample startups (A, B, C) to test the tool instantly.
+
+&nbsp;  \* Communicates value even without uploading real data.
+
+
+
+---
+
+
+
+\## 5. Technical Stack
+
+
+
+\* \*\*Backend:\*\* Python + FastAPI (hosted on Railway/Render).
+
+\* \*\*AI Pipeline:\*\* LangGraph (state machine for data validation, normalization, waste detection).
+
+\* \*\*Frontend:\*\* Next.js + Tailwind (deployed on Vercel).
+
+\* \*\*Database/Storage:\*\* Supabase (audit sessions, report storage).
+
+\* \*\*LLM:\*\* OpenAI GPT for vendor normalization + reasoning.
+
+\* \*\*Exports:\*\* ReportLab (PDF), JSON.
+
+
+
+---
+
+
+
+\## 6. Data Flow MVP
+
+
+
+1. **Input:** Admin authorizes Google Workspace via OAuth2
+
+2. **Processing:**
+
+&nbsp;  \* Fetch and validate directory, license, and activity data from Google Workspace.
+&nbsp;  \* Normalize vendor + employee data - map with required fields
+&nbsp;  \* Run waste detection rules + LLM analysis.
+3\. \*\*Output:\*\*
+
+
+
+&nbsp;  \* Findings scored by severity + savings impact.
+
+&nbsp;  \* Generated PDF + JSON reports (download or share).
+
+
+
+---
+
+
+
+\## 7. Functional Requirements
+
+
+
+* **FR-1:** Connect to Google Workspace via OAuth2 and validate fetched data per audit session.
+
+\* \*\*FR-2:\*\* Normalize vendor names using LLM prompts.
+
+\* \*\*FR-3:\*\* Intelligent data mapping with our required fields
+
+\* \*\*FR-3:\*\* Apply waste detection rules with fallback logic.
+
+\* \*\*FR-4:\*\* Generate structured JSON output:
+
+
+
+&nbsp; \* vendor, license\\\_id, user\\\_email, status, recommendation, estimated\\\_saving.
+
+\* \*\*FR-5:\*\* Create human-readable PDF with: executive summary, metrics, recommendations.
+
+\* \*\*FR-6:\*\* Provide demo mode with 3 sample datasets.
+
+
+
+---
+
+
+
+\## 8. Non-Functional Requirements
+
+
+
+\* \*\*Performance:\*\* Process 100 licenses in <60 seconds.
+
+\* \*\*Accuracy:\*\* ≥85% detection accuracy on test datasets.
+
+\* \*\*Resilience:\*\* Handle empty/corrupted CSVs gracefully.
+
+\* \*\*Security:\*\* Zero PII storage (all data deleted after session).
+
+\* \*\*Privacy-first:\*\* No data retention, signed URLs expire in 1 hour.
+
+
+
+---
+
+
+
+\## 9. Success Metrics
+
+
+
+\* ≥ 85% accuracy in detecting unused/misallocated licenses.
+
+\* Average savings identified: \*\*≥ \\$5,000 per company\*\*.
+
+\* <60 seconds processing time for datasets of 100 licenses.
+
+\* 50 startups testing MVP within 2 weeks of launch.
+
+\* At least 3 pilot customers identified by end of month 1.
+
+
+
+---
+
+
+
+\## 10. Risks \& Mitigation
+
+
+
+| Risk                          | Mitigation                                        |
+
+| ----------------------------- | ------------------------------------------------- |
+
+| API permission issues or partial data | Request minimal read-only scopes; handle pagination, backoff, and retries |
+
+| No waste detected             | Return optimization tips instead                  |
+
+| Vendor normalization fails    | Use fallback dictionary                           |
+
+| Privacy concerns              | Zero retention + shareable signed URLs            |
+
+| Limited perception (CSV-only) | Position as “fast MVP → integrations coming next” |
+
+
+
+---
+
+
+
+\## 11. MVP Scope
+
+
+
+\*\*In Scope:\*\*
+
+
+
+\* Google Workspace OAuth2 integration.
+
+\* Data cleaning, normalization & intelligent mapping
+
+\* Basic waste detection.
+
+\* PDF + JSON reports.
+
+\* Demo mode.
+
+
+
+\*\*Out of Scope (future roadmap):\*\*
+
+
+
+\* Other API integrations (Spendesk, HRIS, vendor APIs).
+
+\* Automated license cancellation.
+
+\* Multi-company management.
+
+\* Payments \& authentication.
+
+
+
+---
+
+
+
+\## 12. Post-MVP Roadmap
+
+
+
+\* \*\*Week 2–4:\*\* Collect feedback, refine waste detection, improve reporting clarity.
+
+\* \*\*Month 2:\*\* Add API connectors (Google Workspace, Spendesk) as optional inputs.
+
+\* \*\*Month 3+:\*\* Expand features: overlap detection, predictive waste forecasts, benchmarking vs peers.
+
+\* \*\*Long-Term:\*\* Return to \*\*autonomous AI agent vision\*\* (fetch → analyze → recommend → execute).
+
+
+
+---
+
+
+
+\## 13. Positioning Statement
+
+
+
+> \*Lyson is the fastest way for startups to uncover SaaS waste. Connect Google Workspace and get a \$5k saving report in 5 minutes — privacy-first, with minimal read-only scopes.*
+
+
+
+---
+
+
+
+✅ This \*\*PRD v2\*\* now reflects your pivot: CSV-first, startup-focused, lightweight MVP — but clearly framed as the \*\*stepping stone toward the agent vision\*\*.
+
+
+
+---
+
+
+
+Do you want me to also \*\*redesign your landing page copy\*\* (headline, subheadline, CTA) so it sells this “fast savings now, full automation later” positioning?
+
+
+

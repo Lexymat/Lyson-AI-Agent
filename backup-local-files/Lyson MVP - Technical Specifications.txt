@@ -1,0 +1,220 @@
+# Lyson MVP - Technical Specification & Reference
+
+## Core Functionality
+The MVP connects to Google Workspace via OAuth2, fetches user/license data, detects waste using AI agents, and generates downloadable reports. No user data is stored - sessions expire after 1 hour.
+
+## API Endpoints Required
+- `POST /auth/google` - Initiate OAuth2 flow
+- `GET /auth/callback` - Handle OAuth2 callback
+- `POST /audit/start` - Begin audit process with access token
+- `GET /audit/status/{session_id}` - Check processing status (WebSocket preferred)
+- `GET /audit/report/{session_id}` - Get JSON report
+- `GET /audit/report/{session_id}/pdf` - Download PDF report
+- `POST /demo/start` - Start demo with sample data (no auth)
+- `GET /health` - API health check
+
+## Google Workspace Data to Fetch
+### From Admin SDK Directory API
+- Users: email, fullName, suspended, archived, lastLoginTime, orgUnitPath
+- Licenses: productId, skuId, userId, skuName
+
+### From Reports API  
+- Login activity for past 90 days
+- License assignment history
+
+### Required Scopes
+- `admin.directory.user.readonly`
+- `admin.reports.audit.readonly`
+
+## Data Processing Pipeline (LangGraph States)
+1. **FETCH_DATA** - Retrieve from Google Workspace APIs
+2. **VALIDATE** - Check data completeness and format
+3. **NORMALIZE** - Standardize vendor names and SKUs
+4. **MAP_FIELDS** - Map to required audit fields
+5. **DETECT_WASTE** - Apply detection rules
+6. **GENERATE_REPORT** - Create JSON and PDF outputs
+
+## Required Audit Fields (After Mapping)
+- price (hardcoded for Google Workspace SKUs)
+- tier_plan (Business Starter/Standard/Plus)
+- last_login (from lastLoginTime)
+- login_frequency (calculated from Reports API)
+- user_name (fullName)
+- user_email
+- license_name (skuName)
+- vendor ("Google Workspace")
+- employee_status (active/suspended/archived)
+- payment_recurrence (monthly/annual - hardcoded)
+
+## Waste Detection Rules
+1. **Inactive Users** - No login > 60 days
+2. **Suspended with License** - Suspended=true but has active license
+3. **Archived with License** - Archived=true but has active license
+4. **Never Logged In** - License assigned but lastLoginTime=null
+5. **Duplicate Licensing** - User has multiple SKUs of same product
+
+## Hardcoded Google Workspace Pricing (USD/month)
+```
+Business Starter: $6
+Business Standard: $12
+Business Plus: $18
+Enterprise Standard: $25
+Enterprise Plus: $30
+```
+
+## LLM Tasks (GPT-3.5 sufficient)
+- Normalize SKU names to standard format
+- Generate executive summary from findings
+- Create recommendation text with confidence scores
+- Handle unknown field mapping
+
+## Report Structure (JSON)
+```
+{
+  "session_id": "uuid",
+  "audit_date": "2025-08-26",
+  "company_domain": "example.com",
+  "summary": {
+    "total_licenses": 50,
+    "total_cost_monthly": 600,
+    "waste_identified": 120,
+    "optimization_percentage": 20,
+    "confidence_score": 0.87
+  },
+  "findings": [
+    {
+      "type": "inactive_user",
+      "user_email": "john@example.com",
+      "license": "Business Standard",
+      "monthly_cost": 12,
+      "last_activity": "2025-06-15",
+      "recommendation": "Remove license",
+      "confidence": 0.95
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Remove 5 inactive licenses",
+      "potential_savings": 60,
+      "priority": "high"
+    }
+  ]
+}
+```
+
+## PDF Report Sections
+1. Executive Summary (1 page)
+   - Total savings identified
+   - Optimization percentage
+   - Key metrics visualization
+2. Detailed Findings Table
+   - User, License, Status, Recommendation
+3. Recommendations
+   - Prioritized action items
+4. Methodology Note
+   - Data sources and confidence levels
+
+## Demo Mode Data
+Three pre-built JSON datasets mimicking Google Workspace responses:
+1. **TechStartup Inc** - 45 users, $8K annual waste (inactive users)
+2. **GrowthCo** - 78 users, $12K annual waste (suspended users with licenses)  
+3. **ScaleFast** - 32 users, $5K annual waste (over-provisioned licenses)
+
+## Frontend Pages
+- `/` - Landing page with OAuth connect button
+- `/auth/callback` - OAuth redirect handler
+- `/processing` - Live status updates during audit
+- `/report/{session_id}` - View and download report
+- `/demo` - Demo selector (3 sample companies)
+
+## Session Management
+- UUID for each audit session
+- Redis storage with 1-hour TTL
+- No PII stored permanently
+- Signed URLs for report access (1-hour expiry)
+
+## Error Handling Scenarios
+- Insufficient Google Workspace permissions → Clear message with required scopes
+- No licenses found → Show optimization tips instead
+- API rate limits → Exponential backoff with status updates
+- Incomplete data → Process available data, note limitations in report
+- LLM failures → Use fallback rules and mappings
+
+## Performance Requirements
+- Process 100 licenses in < 60 seconds
+- Initial page load < 3 seconds
+- API responses < 500ms (excluding Google API calls)
+- PDF generation < 5 seconds
+
+## Security & Privacy
+- OAuth tokens never stored, only kept in memory during session
+- All session data deleted after 1 hour
+- No database - only Redis for temporary storage
+- HTTPS only in production
+- Rate limiting: 10 requests/minute per IP
+
+## Testing Validation Dataset
+Create a test Google Workspace with:
+- 100 users total
+- 20 inactive users (> 60 days)
+- 10 suspended users with licenses
+- 5 users who never logged in
+- Expected waste detection: 35 licenses (~35%)
+- Target accuracy: ≥ 85%
+
+## External Dependencies
+- FastAPI + Uvicorn
+- LangGraph + LangChain
+- OpenAI API (GPT-3.5)
+- Google API Python Client
+- Redis (sessions)
+- ReportLab (PDF)
+- Next.js + Tailwind (frontend)
+- Vercel (frontend hosting)
+- Railway/Render (backend hosting)
+
+## MVP Success Criteria
+1. Successfully connects to Google Workspace
+2. Detects at least 3 types of waste
+3. Generates professional PDF report
+4. Processes 100 licenses in < 60 seconds
+5. Demo mode works without authentication
+6. 85% accuracy on test dataset
+7. Zero data retention after session
+
+## Out of Scope for MVP
+- User authentication/accounts
+- Multiple workspace support
+- Historical tracking
+- Email notifications
+- Automated remediation
+- Payment processing
+- Advanced overlap detection
+- Integration with other SaaS tools
+- Benchmarking against industry
+
+## File Structure Conventions
+- Models: Pydantic classes in `/models`
+- Services: Business logic in `/services`
+- Agents: LangGraph nodes in `/agents`
+- API routes: FastAPI routers in `/api`
+- Shared types: TypeScript/Python in `/shared`
+
+## Naming Conventions
+- API routes: `/api/v1/{resource}/{action}`
+- Session IDs: UUID v4
+- Report files: `lyson-report-{domain}-{date}.pdf`
+- Demo companies: lowercase, no spaces
+
+## Configuration Approach
+- Environment variables for secrets
+- Config class for settings
+- Hardcoded mappings in constants file
+- No database migrations needed
+
+## Monitoring & Logging
+- Log all API calls (no PII)
+- Track LLM token usage
+- Monitor Google API quotas
+- Error tracking with sanitized data
+- Session creation/completion metrics
