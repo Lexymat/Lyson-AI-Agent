@@ -1,0 +1,33 @@
+# Root monorepo ignores
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Coverage
+coverage/
+
+
