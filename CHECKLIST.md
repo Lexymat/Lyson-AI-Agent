@@ -22,6 +22,7 @@
 - [x] Create README files
 - [ ] Install Poetry for Python dependency management
 - [ ] Configure pre-commit hooks
+ - [ ] Create `.cursorrules` file
 
 ## 🔄 Phase 1: Backend Core (Days 2-4)
 
